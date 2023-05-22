@@ -48,6 +48,7 @@ const Signup = async (req, res) => {
 
 const Login = async (req, res) => {
     const userData = req.body;
+    const sessionData = req.session;
     try {
         if (Auth.checkLogin(userData)) {
             let sql = "select * from accounts where email = ?";
@@ -57,6 +58,11 @@ const Login = async (req, res) => {
             if (result) {
                 const isAuth = await bcrypt.compare(userData.password, result.password)
                 if (isAuth) {
+                    req.session.user = {
+                        id: result.id,
+                        username: result.username,
+                        role: result.role
+                    }
                     return res.status(200).json({
                         EM: "Đăng nhâp thành công",
                         EC: "0",
@@ -101,7 +107,32 @@ const Login = async (req, res) => {
     }
 }
 
+const getUserPageinate = async (req, res) => {
+    const limit = +req.query.limit;
+    const page = req.query.page;
+
+    try {
+        const sql1 = "SELECT count(*) as total_users FROM accounts where role = ?";
+        const [rows] = await db.query(sql1, [1])
+        const total_users = rows[0].total_users
+
+        const total_page = Math.ceil(total_users / limit)
+        console.log(page)
+        const offset = (page - 1) * limit
+        const sql = "SELECT * FROM accounts WHERE role= ? limit ? offset ? ";
+        const [result] = await db.query(sql, [1, limit, offset]);
+        console.log(result)
+        res.status(200).json({
+            total_page: total_page,
+            total: total_users,
+            data: result
+        })
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 module.exports = {
     Signup: Signup,
-    Login: Login
+    Login: Login, getUserPageinate
 }
