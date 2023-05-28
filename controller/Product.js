@@ -6,7 +6,7 @@ const getProduct = async (req, res) => {
     try {
         const sql = "SELECT * FROM products limit ?";
         const [result] = await db.execute(sql, [limit]);
-        console.log(result)
+
         res.status(200).json({
             data: result
         })
@@ -22,7 +22,7 @@ const getProductById = async (req, res) => {
         const sql = "SELECT * FROM products where id =  ?";
         const [result] = await db.execute(sql, [id]);
         const data = result[0]
-        console.log(result)
+
         res.status(200).json({
             data: data
         })
@@ -34,9 +34,9 @@ const getProductById = async (req, res) => {
 const addProduct = async (req, res) => {
     try {
         const data = req.body.data;
-        console.log(data)
+
         const product = [data.name, data.description, +data.price, data.img, +data.quantity, +data.categoy]
-        console.log(product)
+
         const sql = "Insert into products (name, description, price, image, quantity, category_id) values (?,?,?,?,?,?);"
         await db.execute(sql, [data.name, data.description, +data.price, data.img, +data.quantity, +data.categoy])
     } catch (e) {
@@ -56,11 +56,11 @@ const getProductPageinate = async (req, res) => {
         const total_product = rows[0].total_product
 
         const total_page = Math.ceil(total_product / limit)
-        console.log(page)
+
         const offset = (page - 1) * limit
         const sql = "SELECT * FROM products limit ? offset ?";
         const [result] = await db.query(sql, [limit, offset]);
-        console.log(result)
+
         res.status(200).json({
             total_page: total_page,
             total: total_product,

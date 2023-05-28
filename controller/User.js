@@ -54,11 +54,11 @@ const Login = async (req, res) => {
             let sql = "select * from accounts where email = ?";
             const [data] = await db.execute(sql, [userData.email])
             const result = data[0];
-            console.log(result)
+
             if (result) {
                 const isAuth = await bcrypt.compare(userData.password, result.password)
                 if (isAuth) {
-                    req.session.user = {
+                    sessionData.user = {
                         id: result.id,
                         username: result.username,
                         role: result.role
@@ -66,12 +66,7 @@ const Login = async (req, res) => {
                     return res.status(200).json({
                         EM: "Đăng nhâp thành công",
                         EC: "0",
-                        data: {
-                            id: result.id,
-                            email: result.email,
-                            username: result.username,
-                            role: result.role
-                        }
+                        data: result
                     })
                 }
                 else {
@@ -107,6 +102,25 @@ const Login = async (req, res) => {
     }
 }
 
+const postUpdateUser = async (req, res) => {
+    const user = req.body.user;
+    const id = req.body.id;
+    try {
+        const sql = `UPDATE accounts SET username = ?,
+         phone = ?, address = ?, birthday = ?, gender = ? WHERE (id = ?);`
+        const result = await db.execute(sql, [user.username, user.phone, user.address, user.dob, user.gender, id])
+        console.log(result)
+        res.status(200).json(
+            {
+                "EC": 0,
+                "EM": "Cập nhật thông tin thành công"
+            }
+        )
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 const getUserPageinate = async (req, res) => {
     const limit = +req.query.limit;
     const page = req.query.page;
@@ -117,11 +131,11 @@ const getUserPageinate = async (req, res) => {
         const total_users = rows[0].total_users
 
         const total_page = Math.ceil(total_users / limit)
-        console.log(page)
+
         const offset = (page - 1) * limit
         const sql = "SELECT * FROM accounts WHERE role= ? limit ? offset ? ";
         const [result] = await db.query(sql, [1, limit, offset]);
-        console.log(result)
+
         res.status(200).json({
             total_page: total_page,
             total: total_users,
@@ -132,7 +146,9 @@ const getUserPageinate = async (req, res) => {
     }
 }
 
+
+
 module.exports = {
     Signup: Signup,
-    Login: Login, getUserPageinate
+    Login: Login, getUserPageinate, postUpdateUser
 }

@@ -67,6 +67,40 @@ const getOrderAdmin = async (req, res) => {
     }
 }
 
+const getOrderUser = async (req, res) => {
+    const limit = +req.query.limit;
+    const page = req.query.page;
+    const id = +req.query.id
+    console.log(req.query)
+
+    try {
+        const sql1 = `
+        SELECT count(*) as total_orders from orders where customer_id = ?;
+        `
+        const [rows] = await db.query(sql1, [id])
+        const total_orders = rows[0].total_orders
+
+        const total_page = Math.ceil(total_orders / limit)
+        console.log("Tổng số trang " + total_page)
+        const offset = (page - 1) * limit
+        const sql = `
+        SELECT o.id AS order_id, o.total, a.username, date(o.order_date) as order_date, o.status
+        FROM orders o
+        JOIN accounts a ON o.customer_id = a.id
+        where o.customer_id = ?
+        limit ? offset ?
+        `
+        const [result] = await db.query(sql, [id, limit, offset]);
+        console.log(result)
+        res.status(200).json({
+            total_page: total_page,
+            total: total_orders,
+            data: result
+        })
+    } catch (e) {
+        console.log(e)
+    }
+}
 
 const getRevenueStat = async (req, res) => {
     const year = req.query.year
@@ -161,6 +195,21 @@ const getDetailOrderbyId = async (req, res) => {
 
 }
 
+const cancelOrder = async (req, res) => {
+
+    const id = req.body.id
+    try {
+        const sql = `UPDATE orders SET status = -1 WHERE (id = ?);`;
+        const result = await db.execute(sql, [id]);
+        console.log(result)
+        res.status(200).json({
+            EM: "Hủy đơn hàng thành công",
+        })
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 module.exports = {
-    createOrder, getOrderAdmin, getRevenueStat, getProductStat, getProductRenevue, updateOrder, getDetailOrderbyId
+    createOrder, getOrderAdmin, getRevenueStat, getProductStat, getProductRenevue, updateOrder, getDetailOrderbyId, getOrderUser, cancelOrder
 }

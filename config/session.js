@@ -23,10 +23,10 @@ const createSessionConfig = () => {
     return {
         secret: "secret-project",
         store: sessionStore,
-        resave: false,
+        resave: true,
         saveUninitialized: false,
         cookie: {
-            maxAge: 60 * 60 * 1000
+            maxAge: 60 * 60 * 1000,
         }
     }
 }
