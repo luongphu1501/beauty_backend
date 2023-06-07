@@ -7,5 +7,6 @@ router.get("/getbyid/", product.getProductById)
 router.post("/create", product.addProduct)
 router.post("/update", product.updateProduct)
 router.get("/paginate", product.getProductPageinate)
-
+router.get("/search", product.searchProduct)
+router.get("/category", product.getProductByCategory)
 module.exports = router
