@@ -178,9 +178,24 @@ const searchProduct = async (req, res) => {
     }
 }
 
+const deleteProduct = async (req, res) => {
+    const product_id = req.body.id;
+    console.log(product_id)
+    try {
+        const sql = "DELETE FROM products WHERE id = ?;"
+        const result = await db.execute(sql, [product_id]);
+        console.log(result);
+        res.status(200).json({
+            EM: "Xóa sản phẩm thành công"
+        })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 const updateProduct = (req, res) => {
     const data = req.body
 }
 module.exports = {
-    getProduct, getProductById, addProduct, updateProduct, getProductPageinate, searchProduct, getProductByCategory
+    getProduct, getProductById, addProduct, updateProduct, getProductPageinate, searchProduct, getProductByCategory, deleteProduct
 }

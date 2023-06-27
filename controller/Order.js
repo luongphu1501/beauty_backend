@@ -24,10 +24,15 @@ const createOrder = async (req, res) => {
                     item.quantity, item.id, order_id, item.price
                 ]
                 total += item.quantity * item.price
+                let sql4 = `UPDATE products
+                SET sold = sold + ?, quantity = quantity - ?
+                WHERE id = ?;`
+                await db.execute(sql4, [item.quantity, item.quantity, item.id])
                 await db.execute(sql2, data)
             })
             let sql3 = "UPDATE orders SET total = ? WHERE (`id` = ?)";
             await db.execute(sql3, [total, order_id])
+
         }
     } catch (e) {
         console.log(e)
@@ -128,6 +133,7 @@ const getProductRenevue = async (req, res) => {
         join (select oi.product_id ,count(oi.quantity) as total_sell
         from order_item as oi join orders as o
         on oi.order_id = o.id
+
         group by oi.product_id) as tmp on tmp.product_id = p.id
         
         `
@@ -210,6 +216,83 @@ const cancelOrder = async (req, res) => {
     }
 }
 
+const getDataDashboard = async (req, res) => {
+    try {
+        const sqluser = "SELECT count(*) as total_user FROM accounts where role = 1";
+        const sqlorder = "Select count(*) as total_order FROM orders"
+        const sqlRevenue = "SELECT sum(total) as total_revenue FROM beauty_shop.orders where status != -1"
+        const sqlProduct = "SELECT count(*) as total_product FROM products";
+        const sqlGetOrder = `SELECT o.id AS order_id, o.total, a.username,  o.order_date, o.status
+                                FROM orders o
+                                JOIN accounts a ON o.customer_id = a.id
+                                order by o.order_date desc
+                                limit 5 `;
+
+
+        const [user] = await db.execute(sqluser);
+        const [order] = await db.execute(sqlorder);
+        const [revenue] = await db.execute(sqlRevenue);
+        const [product] = await db.execute(sqlProduct);
+        const [listOrder] = await db.execute(sqlGetOrder);
+
+        res.status(200).json({
+            ...user[0],
+            ...order[0],
+            ...revenue[0],
+            ...product[0],
+            listOrder: listOrder
+        })
+
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const getDataChart = async (req, res) => {
+    try {
+        const sqlStatProduct = `select p.name , total_sell*p.price as product_renevue , total_sell from 
+        products as p 
+        join (select oi.product_id ,count(oi.quantity) as total_sell
+        from order_item as oi join orders as o
+        on oi.order_id = o.id
+        where date(o.order_date) =CURDATE()
+        group by oi.product_id) as tmp on tmp.product_id = p.id`;
+
+
+
+        // const getOrderSuccess = `SELECT date(order_date) as date, COUNT(*) AS order_count
+        // FROM orders
+        // WHERE date(order_date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) and status != -1
+        // GROUP BY date(order_date)`;
+
+        const getOrderSuccess = `SELECT
+        date(order_date) AS order_date,
+        SUM(CASE WHEN status = -1 THEN 1 ELSE 0 END) AS status1,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS status2
+        FROM orders
+         WHERE date(order_date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        GROUP BY DATE(order_date)
+        ORDER BY date(order_date);`
+
+        const [StatProduct] = await db.execute(sqlStatProduct);
+
+        let [OrderSuccess] = await db.execute(getOrderSuccess)
+        OrderSuccess.sort((a, b) => {
+            if (a.date < b.date) return -1
+            if (a.date > b.date) return 1
+        })
+
+        res.status(200).json({
+            StatProduct, OrderSuccess
+        })
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 module.exports = {
-    createOrder, getOrderAdmin, getRevenueStat, getProductStat, getProductRenevue, updateOrder, getDetailOrderbyId, getOrderUser, cancelOrder
+    createOrder, getOrderAdmin, getRevenueStat, getProductStat, getProductRenevue, updateOrder,
+    getDetailOrderbyId, getOrderUser, cancelOrder, getDataDashboard, getDataChart
 }

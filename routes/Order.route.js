@@ -13,7 +13,8 @@ router.get("/revenue", adminAuth, orders.getRevenueStat)
 router.get("/product", adminAuth, orders.getProductStat)
 router.get("/productrenevue", adminAuth, orders.getProductRenevue)
 router.post("/update", adminAuth, orders.updateOrder)
-
+router.get("/data/dashboard", orders.getDataDashboard)
+router.get("/data/chart", orders.getDataChart)
 router.get("/:order_id", orders.getDetailOrderbyId)
 
 module.exports = router

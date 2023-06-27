@@ -9,4 +9,6 @@ router.post("/update", product.updateProduct)
 router.get("/paginate", product.getProductPageinate)
 router.get("/search", product.searchProduct)
 router.get("/category", product.getProductByCategory)
+router.post("/delete", product.deleteProduct)
+
 module.exports = router
